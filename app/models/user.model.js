@@ -1,4 +1,5 @@
 'use strict';
+const { body } = require('express-validator');
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
     class User extends Model {
@@ -21,8 +22,14 @@ module.exports = (sequelize, DataTypes) => {
         },
         {
             sequelize,
-            modelName: 'tbl_User',
+            modelName: 'User',
         },
     );
+
     return User;
 };
+
+// exports.register = (body) => {
+//     console.log('body');
+//     return 1323;
+// };

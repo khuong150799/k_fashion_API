@@ -18,6 +18,4 @@ const constantNotify = {
     NOT_COMPLETE: 'Chưa thanh toán',
 };
 
-module.exports = {
-    constantNotify,
-};
+module.exports = constantNotify;
