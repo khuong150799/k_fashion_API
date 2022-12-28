@@ -15,7 +15,18 @@ exports.register = async (req, res) => {
         // console.log('response[0]', );
         // console.log('response[1]', response[1]);
         if (response[1]) {
-            return res.send({ result: true, data: [{ msg: 'Đăng kí thành công', newData: response[0] }] });
+            const accessToken = jwt.sign({ id: response[0].id, email }, constantNotify.ACCESS_TOKEN, {
+                expiresIn: '1d',
+            });
+            const refreshToken = jwt.sign({ id: response[0].id, email }, constantNotify.REFRESH_TOKEN, {
+                expiresIn: '30d',
+            });
+            res.cookie('refresh_token', refreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'lax',
+            });
+            return res.send({ result: true, data: [{ msg: 'Đăng kí thành công', newData: response[0], accessToken }] });
         } else {
             return res.send({ result: false, errors: [{ msg: 'Email đã tồn tại' }] });
         }
@@ -36,11 +47,11 @@ exports.login = async (req, res) => {
     try {
         const { email, password, active } = req.body;
         const user = await db.User.findOne({ where: { email } });
-        console.log(user?.password);
+        // console.log(user?.password);
         if (!user) {
             return res.send({ result: false, errors: [{ msg: 'Email không tồn tại' }] });
         }
-        console.log(password);
+        // console.log(password);
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
             return res.send({ result: false, errors: [{ msg: 'Mật khẩu không tồn tại' }] });
@@ -51,15 +62,13 @@ exports.login = async (req, res) => {
         const refreshToken = jwt.sign({ id: user.id, email: user.email }, constantNotify.REFRESH_TOKEN, {
             expiresIn: '30d',
         });
-        res.cookie('access_token', 'accessToken', {
-            // httpOnly: true,
-            // secure: process.env.NODE_ENV === 'production',
+        res.cookie('refresh_token', refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'lax',
         });
-        // res.writeHead(200, {
-        //     'Set-Cookie': accessToken,
-        //     'Content-Type': `text/plain`,
-        // });
-        return res.send({ result: true, data: [{ id: user.id, accessToken, refreshToken }] });
+
+        return res.send({ result: true, data: [{ id: user.id, accessToken }] });
     } catch (error) {
         console.log(error);
         return res.send({
@@ -74,14 +83,9 @@ exports.login = async (req, res) => {
 };
 exports.getall = async (req, res) => {
     try {
-        res.cookie('access54274token', 'accessToken', {
-            // httpOnly: true,
-            // secure: process.env.NODE_ENV === 'production',
-        });
-        console.log(req.cookies);
-
         const response = await db.User.findAll({});
-        res.send(response);
+        // console.log(response);
+        res.send({ result: true, data: response });
     } catch (error) {
         console.log(error);
         return res.send({
