@@ -6,7 +6,6 @@ Content-Type: application/json
     "password":"123456",
     "gender":1,
     "email":"leduykhuonggcd@gmail.com",
-    "active":1
 }
 
 ###
@@ -17,9 +16,9 @@ Content-Type: application/json
    
     "password":"123456",
   
-    "email":"leduykhuonggcd@gmail.com",
-    "active":1
+    "email":"leduykhuonggcd@gmail.com"
+    
 }
 
 ###
-GET  http://localhost:4400/api/user/getall
+GET  http://localhost:4400/api/user/getall?keyword=khuong

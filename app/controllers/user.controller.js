@@ -2,15 +2,17 @@ const db = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const constantNotify = require('../config/constants');
+const { Op } = require('sequelize');
 
 exports.register = async (req, res) => {
     try {
-        const { fullname, password, gender, email, active } = req.body;
+        const { fullName, password, gender, email } = req.body;
+        console.log(req.body);
 
         const hash = bcrypt.hashSync(password, 12);
         const response = await db.User.findOrCreate({
             where: { email },
-            defaults: { fullname, password: hash, gender, email, active },
+            defaults: { fullname: fullName, password: hash, gender, email, active: 1 },
         });
         // console.log('response[0]', );
         // console.log('response[1]', response[1]);
@@ -45,7 +47,7 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
     try {
-        const { email, password, active } = req.body;
+        const { email, password } = req.body;
         const user = await db.User.findOne({ where: { email } });
         // console.log(user?.password);
         if (!user) {
@@ -56,6 +58,9 @@ exports.login = async (req, res) => {
         if (!match) {
             return res.send({ result: false, errors: [{ msg: 'Mật khẩu không tồn tại' }] });
         }
+        const updateActive = await db.User.update({ active: 1 }, { where: { email } });
+
+        console.log(updateActive);
         const accessToken = jwt.sign({ id: user.id, email: user.email }, constantNotify.ACCESS_TOKEN, {
             expiresIn: '1d',
         });
@@ -83,8 +88,19 @@ exports.login = async (req, res) => {
 };
 exports.getall = async (req, res) => {
     try {
-        const response = await db.User.findAll({});
-        // console.log(response);
+        let keyword = '';
+
+        if (req.query.keyword) {
+            keyword = req.query.keyword;
+        }
+        const response = await db.User.findAndCountAll({
+            where: { [Op.or]: [{ email: { [Op.substring]: keyword } }, { fullname: { [Op.substring]: keyword } }] },
+            // group: 'createdAt',
+            order: [['id', 'DESC']],
+            offset: 0,
+            limit: 1,
+        });
+        console.log('response', response);
         res.send({ result: true, data: response });
     } catch (error) {
         console.log(error);
